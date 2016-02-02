@@ -15,8 +15,8 @@ import (
 	"mime"
 	"mime/multipart"
 	"mime/quotedprintable"
-	"net/mail"
-	"net/smtp"
+	// "net/mail"
+	// "net/smtp"
 	"net/textproto"
 	"os"
 	"path/filepath"
@@ -37,6 +37,10 @@ var ErrMissingContentType = errors.New("No Content-Type found for MIME entity")
 
 // Email is the type used for email messages
 type Email struct {
+	// Custom Fields
+	Priority  int
+	SendAfter *int64
+	//
 	From        string
 	To          []string
 	Bcc         []string
@@ -343,31 +347,31 @@ func (e *Email) Bytes() ([]byte, error) {
 
 // Send an email using the given host and SMTP auth (optional), returns any error thrown by smtp.SendMail
 // This function merges the To, Cc, and Bcc fields and calls the smtp.SendMail function using the Email.Bytes() output as the message
-func (e *Email) Send(addr string, a smtp.Auth) error {
-	// Merge the To, Cc, and Bcc fields
-	to := make([]string, 0, len(e.To)+len(e.Cc)+len(e.Bcc))
-	to = append(append(append(to, e.To...), e.Cc...), e.Bcc...)
-	for i := 0; i < len(to); i++ {
-		addr, err := mail.ParseAddress(to[i])
-		if err != nil {
-			return err
-		}
-		to[i] = addr.Address
-	}
-	// Check to make sure there is at least one recipient and one "From" address
-	if e.From == "" || len(to) == 0 {
-		return errors.New("Must specify at least one From address and one To address")
-	}
-	from, err := mail.ParseAddress(e.From)
-	if err != nil {
-		return err
-	}
-	raw, err := e.Bytes()
-	if err != nil {
-		return err
-	}
-	return smtp.SendMail(addr, a, from.Address, to, raw)
-}
+// func (e *Email) send(addr string, a smtp.Auth) error {
+// 	// Merge the To, Cc, and Bcc fields
+// 	to := make([]string, 0, len(e.To)+len(e.Cc)+len(e.Bcc))
+// 	to = append(append(append(to, e.To...), e.Cc...), e.Bcc...)
+// 	for i := 0; i < len(to); i++ {
+// 		addr, err := mail.ParseAddress(to[i])
+// 		if err != nil {
+// 			return err
+// 		}
+// 		to[i] = addr.Address
+// 	}
+// 	// Check to make sure there is at least one recipient and one "From" address
+// 	if e.From == "" || len(to) == 0 {
+// 		return errors.New("Must specify at least one From address and one To address")
+// 	}
+// 	from, err := mail.ParseAddress(e.From)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	raw, err := e.Bytes()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return smtp.SendMail(addr, a, from.Address, to, raw)
+// }
 
 // Attachment is a struct representing an email attachment.
 // Based on the mime/multipart.FileHeader struct, Attachment contains the name, MIMEHeader, and content of the attachment in question
