@@ -73,7 +73,7 @@ func (s *EmailServer) Run() {
 	  (send_after is not null and ? - send_after between 0 and ?))`
 
 	for {
-		s.dbo.Debug().Where(sql, maxFails, now, maxTimeSec, now, maxTimeSec).
+		s.dbo.Where(sql, maxFails, now, maxTimeSec, now, maxTimeSec).
 			Order("priority desc, created_at asc").
 			Limit(batch).
 			Find(&msgs)
@@ -98,7 +98,7 @@ func (s *EmailServer) Run() {
 						"updated_at":     &now,
 					}
 				}
-				edb := s.dbo.Debug().Model(&msgs[i]).Updates(upd).Error
+				edb := s.dbo.Model(&msgs[i]).Updates(upd).Error
 				if edb != nil {
 					log.Error("Failed to update message table", "email-err", err, "db-err", edb)
 					panik.Do("Failed to update message table.")

@@ -1,0 +1,24 @@
+email:
+    buffer: 250
+    queue:
+        default:
+            engine: redis
+            host:   dockerhost
+            port:   6379
+            db:     0
+            name:   myqueue
+    server:
+        max-fails: 3
+        max-time: 100h
+        batch:    50
+        database:
+            engine: sqlite3
+            path:   /Users/mak/Downloads/sql.db
+        smtp:
+            host:
+            port:
+            auth:
+                identity:
+                username:
+                password:
+                host:
