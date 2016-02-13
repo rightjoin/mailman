@@ -35,6 +35,9 @@ func NewEmailServer() *EmailServer {
 		),
 	}
 
+	// testing
+	es.dbo.LogMode(true)
+
 	es.address = conf.String("", "email.server.smtp", "host")
 	if conf.Exists("email.server.smtp", "port") {
 		es.address = fmt.Sprintf("%s:%d", es.address, conf.Int(0, "email.server.smtp", "port"))
@@ -66,6 +69,7 @@ func (s *EmailServer) Run() {
 
 	var upd map[string]interface{}
 	var msgs []Message
+
 	sql := `
 	  sent = 0
 	  and num_fails < ?
@@ -98,11 +102,10 @@ func (s *EmailServer) Run() {
 						"updated_at":     &now,
 					}
 				}
-				edb := s.dbo.Model(&msgs[i]).Updates(upd).Error
-				if edb != nil {
+				edb := s.dbo.Model(Message{}).Where("id = ?", msgs[i].Id).Updates(upd).Error
+				panik.On2(edb, func() {
 					log.Error("Failed to update message table", "email-err", err, "db-err", edb)
-					panik.Do("Failed to update message table.")
-				}
+				})
 			}
 		}
 	}
@@ -110,7 +113,8 @@ func (s *EmailServer) Run() {
 
 func (s *EmailServer) dispatchMessage(m *Message) error {
 	var e email.Email
-	err := ds.LoadStruct(&e, []byte(m.Data))
+	//err := ds.LoadStruct(&e, []byte(m.Data))
+	err := ds.Load(&e, []byte(m.Data))
 	if err != nil {
 		return err
 	}
@@ -152,8 +156,12 @@ func (s *EmailServer) queueToDb() {
 		panik.On(err)
 		if len(d) > 0 {
 			// read from queue
-			err = ds.LoadStruct(&em, d)
-			panik.On(err)
+			//err = ds.LoadStruct(&em, d)
+			err = ds.Load(&em, d)
+			if err != nil {
+				log.Error("Error reading email from queue", "email", em, "error", err)
+				panik.On(err)
+			}
 
 			// save to db
 			m := Message{

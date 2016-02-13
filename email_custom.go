@@ -15,7 +15,7 @@ func (e *Email) Enque() {
 	}
 
 	go func() {
-		d, err := ds.ToBytes(e)
+		d, err := ds.ToBytes(e, false)
 		panik.On(err)
 		mails <- d
 	}()
@@ -39,11 +39,11 @@ func (e *Email) SendAt(t time.Time) {
 var Queue que.Queue
 
 var mails chan []byte
+var size int = 100
 
 func init() {
-	keys := []string{"email", "queue", "default"}
-	if conf.Exists(keys...) {
-		Queue = que.NewQueue(keys...)
+	if conf.Exists("email.queue.default") {
+		Queue = que.NewQueue("email.queue.default")
 	}
 }
 
@@ -52,7 +52,7 @@ func startLoop() {
 		return
 	}
 
-	mails = make(chan []byte, conf.Int(250, "email", "buffer"))
+	mails = make(chan []byte, conf.Int(size, "email", "buffer"))
 	panik.If(Queue == nil, "Queue is not initialized")
 
 	go func() {
