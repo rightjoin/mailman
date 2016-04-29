@@ -1,4 +1,4 @@
-email + email-server
+Mailman Email Server
 =====
 
 This is a fork of amazing yet simple, '**Robust and flexible email library for Go**'.
